@@ -8,6 +8,8 @@ echo "Starting PX4 Offboard Control System..."
 echo "Project directory: $PROJECT_DIR"
 echo "Scripts directory: $SCRIPT_DIR"
 
+GZ_WORLD="lawn"
+
 # Launch QGroundControl first (if not already running)
 if pgrep -f "QGroundControl-x86_64.AppImage" > /dev/null; then
     echo "QGroundControl is already running."
@@ -21,7 +23,7 @@ fi
 gnome-terminal --window --title="Gazebo Simulator" -- bash -c "
     echo 'Starting Gazebo Simulator...';
     cd $SCRIPT_DIR;
-    ./start_gazebo_new.sh;
+    ./start_gazebo_new.sh $GZ_WORLD;
     exec bash
 "
 
@@ -43,7 +45,7 @@ sleep 2
 gnome-terminal --tab --title="Offboard Control" -- bash -c "
     echo 'Building and starting Offboard Control...';
     cd $SCRIPT_DIR;
-    ./start_project.sh;
+    ./start_project.sh $GZ_WORLD;
     exec bash
 "
 

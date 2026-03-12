@@ -33,7 +33,7 @@ class GroundVehicleSimulator : public rclcpp_lifecycle::LifecycleNode
 public:
     GroundVehicleSimulator() : LifecycleNode("ground_vehicle_simulator"),
         rng_(std::random_device{}()),
-        vel_dist_(-.5f, .5f),
+        vel_dist_(-1.0f, 1.0f),
         dur_dist_(1.0f, 4.0f)
     {
     }
@@ -91,24 +91,36 @@ private:
 
     float x_{1.f}, y_{0.f};
     float vx_{0.f}, vy_{0.f};
+    float target_vx_{0.f}, target_vy_{0.f};
 
     void pick_new_velocity()
     {
-        vx_ = vel_dist_(rng_);
-        vy_ = vel_dist_(rng_);
+        // Polar coordinates for uniform direction distribution
+        std::uniform_real_distribution<float> angle_dist(0.0f, 2.0f * M_PI);
+        std::uniform_real_distribution<float> speed_dist(0.5f, 1.5f);
+
+        float angle = angle_dist(rng_);
+        float speed = speed_dist(rng_);
+
+        target_vx_ = speed * std::cos(angle);
+        target_vy_ = speed * std::sin(angle);
 
         float duration_s = dur_dist_(rng_);
         dir_timer_ = create_wall_timer(
             std::chrono::milliseconds(static_cast<int>(duration_s * 1000)),
             [this]() {
                 pick_new_velocity();
-                dir_timer_->cancel();
             });
     }
 
     void update_position()
     {
         constexpr float dt = 0.05f;
+
+        // Smooth velocity transition (simple low-pass filter)
+        vx_ += (target_vx_ - vx_) * 0.3f;
+        vy_ += (target_vy_ - vy_) * 0.3f;
+
         x_ += vx_ * dt;
         y_ += vy_ * dt;
 
@@ -361,11 +373,15 @@ private:
         float dist = std::hypot(dx, dy);
 
         if (follow_state_ == FollowState::HOLD) {
-            if (dist >= MIN_FOLLOW_DIST + HYSTERESIS) follow_state_ = FollowState::FOLLOWING;
+            if (dist >= MIN_FOLLOW_DIST + HYSTERESIS) {
+                follow_state_ = FollowState::FOLLOWING;
+                RCLCPP_INFO(get_logger(), "State switched: HOLD -> FOLLOWING. Distance to vehicle: %.2f m", dist);
+            }
         } else {
             if (dist < MIN_FOLLOW_DIST) {
                 follow_state_ = FollowState::HOLD;
                 hold_x_ = drone_x_; hold_y_ = drone_y_;
+                RCLCPP_INFO(get_logger(), "State switched: FOLLOWING -> HOLD. Distance to vehicle: %.2f m", dist);
             }
         }
 
@@ -455,7 +471,7 @@ private:
         req.set_name("ground_vehicle");
         req.mutable_position()->set_x(msg->pose.position.x);
         req.mutable_position()->set_y(msg->pose.position.y);
-        req.mutable_position()->set_z(0.08);
+        req.mutable_position()->set_z(-0.10);
         req.mutable_orientation()->set_w(1.0);
         gz::msgs::Boolean rep;
         bool result = false;

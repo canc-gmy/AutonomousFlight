@@ -6,6 +6,8 @@ echo "Building and starting Offboard Control project..."
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_DIR"
 
+GZ_WORLD="lawn"
+
 # Wait for other components to be ready
 echo "Waiting for Gazebo and uORB client to be ready..."
 sleep 20
@@ -31,4 +33,4 @@ echo "Build completed."
 # Run the offboard control node
 echo "Starting offboard control node..."
 # ros2 run custom_offboard_control offboard_control_node
-ros2 run custom_offboard_control offboard_control_sequenced_node
+ros2 run custom_offboard_control offboard_control_sequenced_node $GZ_WORLD
