@@ -8,7 +8,7 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 MODELS_DIR="$PROJECT_DIR/models"
 
 # ── World usato da gz_x500 ────────────────────────────────────────────────────
-GZ_WORLD="default"
+GZ_WORLD="forest"
 
 # ── Trap per chiudere PX4 se lo script viene interrotto (Ctrl+C) ──────────────
 cleanup() {
