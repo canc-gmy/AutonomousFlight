@@ -129,7 +129,7 @@ private:
         msg.header.frame_id = "map";
         msg.pose.position.x = x_;
         msg.pose.position.y = y_;
-        msg.pose.position.z = 0.f;
+        msg.pose.position.z = 0.1f;
         pose_pub_->publish(msg);
     }
 };
@@ -328,7 +328,7 @@ private:
             return;
         }
 
-        if (setpoint_counter_ == 10) {
+        if (setpoint_counter_ == 10 && state_ != MissionState::DONE && state_ != MissionState::LAND) {
             setpoint_counter_++;
             enable_offboard();
             arm();
@@ -360,7 +360,9 @@ private:
             state_ = MissionState::DONE;
             break;
         case MissionState::DONE:
-            publish_setpoint(hold_x_, hold_y_, CRUISE_ALT);
+            if (reached(hold_x_, hold_y_, 0.f)) {
+                disarm();
+            }
             break;
         default: break;
         }
@@ -416,6 +418,7 @@ private:
 
     void enable_offboard() { publish_vehicle_command(VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1.f, 6.f); }
     void arm() { publish_vehicle_command(VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.f); }
+    void disarm() { publish_vehicle_command(VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.f); }
     void land() { publish_vehicle_command(VehicleCommand::VEHICLE_CMD_NAV_LAND); }
 
     void publish_vehicle_command(uint16_t cmd, float p1 = 0.f, float p2 = 0.f)

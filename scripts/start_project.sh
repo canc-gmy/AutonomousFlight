@@ -10,7 +10,7 @@ GZ_WORLD="lawn"
 
 # Wait for other components to be ready
 echo "Waiting for Gazebo and uORB client to be ready..."
-sleep 20
+sleep 2
 
 # Build the project
 echo "Building project..."
